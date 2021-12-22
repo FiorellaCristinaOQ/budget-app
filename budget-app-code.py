@@ -1,7 +1,6 @@
 def create_spend_chart(categories):
-    output = ''
+    output = 'Percentage spent by category\n'
     output_lst = []
-    percentage = 100
     categories_spent = []
     total_spent = 0
     previous_total_spent = 0
@@ -20,24 +19,30 @@ def create_spend_chart(categories):
     n = 100
     while n >= 0:
         for i in output_lst:
-            if i["%"] >= n:
-                output += str(n) + '|' + ' ' + 'o' + ' '
+            if i["%"] >= n and i == output_lst[0]:
+                output += ' '*(3 - len(str(n))) + str(n) + '|' + ' ' + 'o' + ' '
+            elif i["%"] < n and i == output_lst[0]:
+                output += ' '*(3 - len(str(n))) + str(n) + '|' + ' '*3
+            elif i["%"] >= n and i != output_lst[0]:
+                output += ' ' + 'o' + ' '
             else:
-                output += str(n) + '|' + ' '*3
+                output += '   '
         output += ' ' + '\n'
         n = n - 10
     output += '    ' + '-'*3*len(output_lst) + '-\n'
     longest_name =  max(names_lst, key=len) # Encuentra la palabra más larga de una lista de strings
     for i in range(len(longest_name)):
         for j in names_lst:
+            if j == names_lst[0]:
+                output += '    '
             if i < len(j):
-                if j == names_lst[0]:
-                    output += '   '
                 output += ' ' + j[i] + ' '
+            else:
+                output += '   '
+        output += '\n'
     return output
 class Category:
     def __init__(self, element):
-        print("Creado")
         self.element = element
         self.ledger = []
     def deposit(self, amount, description = ''):
@@ -60,25 +65,30 @@ class Category:
             return True
         return False
     def check_funds(self, amount):
-        if(self.get_balance >= amount):
+        if(self.get_balance() >= amount):
             return True
         return False
     def __str__(self): # Este método se llama cuando se escribe print(obj), no necesita obj.__str__()
         title_length = len(self.element)
         if(title_length % 2 == 0):
             string_length = (30 - title_length)/2
-            string = '*'*string_length + self.element + '*'*string_length + '\n'
+            string = '*'*int(string_length) + self.element + '*'*int(string_length) + '\n'
         else:
             string_length = (30 - title_length)/2 + 0.5
-            string = '*'*string_length + self.element + '*'*(string_length - 1) + '\n'
+            string = '*'*int(string_length) + self.element + '*'*int(string_length - 1) + '\n'
+        withdraw_total = 0
         for i in self.ledger:
             count = 0
+            withdraw_total += i["amount"]
             for j in i["description"]: # Por cada letra en la descripción
                 if count < 23:
                     string += j
                 else:
                     break
-            string += round(i["amount"],2) + '\n'
+                count += 1
+            spaces_amount = 7 - (len(str(int(i["amount"]))) + 3)
+            string += ' '*(23 - count) + ' '*spaces_amount + f'{float(i["amount"]):.2f}' + '\n'
+        string += 'Total: ' + f'{float(withdraw_total):.2f}'
         return string
 # Crear objetos    
 food = Category("Food")
@@ -90,5 +100,24 @@ food.deposit(45.56)
 # Test withdraw
 food.withdraw(45.67, "milk, cereal, eggs, bacon, bread")
 food.withdraw(45.67)
+food.withdraw(1000)
 # Test get balance
-food.get_balance()
+print(food.get_balance())
+print(entertainment.get_balance())
+# Test transfer
+food.transfer(20, entertainment)
+print("Transferencia de 20 de food a entertainment")
+print(food.get_balance())
+print(entertainment.get_balance())
+print("Transferencia de 200 de entertainment a food")
+entertainment.transfer(200, food)
+print(food.get_balance())
+print(entertainment.get_balance())
+# Test check_funds
+food.deposit(10, "deposit")
+print('Entertainment check funds (10): ',entertainment.check_funds(10))
+print('Business check funds (10): ',business.check_funds(10))
+# Test str method
+print(food)
+# Test create a spend chart
+print(create_spend_chart([business, food, entertainment]))
